@@ -20,7 +20,19 @@ module Pipedrive
         "#{resource_url}/products",
         params.merge(id: id, product_id: product.id)
       )
-      Product.new(response.dig(:data))
+      Product.new(response[:data])
+    end
+
+    # POST /deals/:id/participants
+    def add_participant(participant)
+      raise "Param *participant* is not an instance of Pipedrive::Person" \
+        unless participant.is_a?(Pipedrive::Person)
+
+      response = request(
+        :post,
+        "#{resource_url}/participants",
+        { id: id, person_id: participant.id }
+      )
     end
 
     # DELETE /deals/:id/products/:product_attachment_id
