@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-
+require 'faraday/multipart'
 module Pipedrive
   module APIOperations
     module Request
@@ -14,19 +14,43 @@ module Pipedrive
             unless %i[get post put patch delete].include?(method)
 
           Util.debug "#{name} #{method.upcase} #{url}"
-          response = api_client.send(method) do |req|
-            req.url url
-            req.params = { api_token: Pipedrive.api_key }
-            if %i[post put patch].include?(method)
-              req.body = params.to_json
-            else
-              req.params.merge!(params)
+
+
+          if params.key?(:file)
+
+            conn = Faraday.new(url: BASE_URL) do |faraday|
+              faraday.request :multipart
+              faraday.adapter Faraday.default_adapter
             end
+
+            payload = { api_token: Pipedrive.api_key }
+
+            payload[:file] = Faraday::Multipart::FilePart.new(params[:file], "text/x-ruby")
+            payload[:deal_id] = params[:deal_id]
+
+            response = conn.post("post") do |req|
+              req.url url
+              req.params = { api_token: Pipedrive.api_key }
+              req.body = payload
+            end
+          else
+            response = api_client_json.send(method) do |req|
+              req.url url
+              req.params = { api_token: Pipedrive.api_key }
+              if %i[post put patch].include?(method)
+                req.body = params.to_json
+              else
+                req.params.merge!(params)
+              end
+            end
+
           end
+
+
           Util.serialize_response(response)
         end
 
-        def api_client
+        def api_client_json
           @api_client = Faraday.new(
             url: BASE_URL,
             headers: { "Content-Type": "application/json" }
