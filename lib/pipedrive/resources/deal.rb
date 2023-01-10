@@ -33,9 +33,6 @@ module Pipedrive
         "#{resource_url}/participants",
         { id: id, person_id: participant.id }
       )
-
-      # Add deal to the person
-      participant.deals << self
     end
 
     # DELETE /deals/:id/products/:product_attachment_id

@@ -98,6 +98,74 @@ RSpec.describe Pipedrive::Deal, type: :resource do
     end
   end
 
+  describe "#add_participant" do
+    let(:person) { Pipedrive::Person.new(id: 1) }
+    before do
+      stubs.get("dealFields") do
+        [
+          200,
+          { "Content-Type": "application/json" },
+          {
+            success: true,
+            data: [],
+          }.to_json,
+        ]
+      end
+
+      stubs.get("personFields") do
+        [
+          200,
+          { "Content-Type": "application/json" },
+          {
+            success: true,
+            data: [],
+          }.to_json,
+        ]
+      end
+
+      stubs.post("deals/1/participants") do
+        [
+          200,
+          { "Content-Type": "application/json" },
+          {
+            success: true,
+            data: [],
+          }.to_json,
+        ]
+      end
+
+      stubs.get("persons/1/deals") do
+        [
+          200,
+          { "Content-Type": "application/json" },
+          {
+            success: true,
+            data: [{ id: 1 }],
+          }.to_json,
+        ]
+      end
+    end
+
+    context "missing or wrong params" do
+      it "raises error when a participant param of a wrong type is sent" do
+        expect do
+          subject.add_participant("whatever")
+        end.to raise_error(
+          "Param *participant* is not an instance of Pipedrive::Person"
+        )
+      end
+    end
+
+    context "valid" do
+      subject { described_class.new(id: 1) }
+      it "adds the deal to the Person" do
+        subject.add_participant(person)
+        expect(person.deals.length).to eq(1)
+        # TODO:  Add check that it's the correct deal. ID = 1
+      end
+    end
+  end
+
   describe "#delete_attached_product" do
     subject { described_class.new(id: 1) }
     let(:product_attachment_id) { 1 }
